@@ -1,27 +1,34 @@
 @(message: String)
 
 @main(message) {
-
-	<label for="emailAddress">Email : </label>
-	<input type="text" id="emailAddress"/>
-	<label for="password">Password : </label>
-	<input type="text" id="password"/>
-	<span id="login">login</span>
-	<span id="singup">singup</span>
-	<span id="secure">secure</span>
-	<label for="activation">Activation : </label>
-	<input type="text" id="activation"/>
-	<span id="activate">activate</span>
-
+	
+	<div>
+		<label for="emailAddress">Email : </label>
+		<input type="text" id="emailAddress"/>
+		<label for="password">Password : </label>
+		<input type="text" id="password"/>
+		<label for="fullName">Name : </label>
+		<input type="text" id="fullName"/>
+		<span id="login">login</span>
+		<span id="singup">singup</span>
+		<span id="secure">secure</span>
+	</div>
+	
+	<div>
+		<label for="activation">Activation : </label>
+		<input type="text" id="activation"/>
+		<span id="activate">activate</span>
+	</div>
+	
     <script>
     
     	$("#login").click(function(){
     		$.ajax({
     			type: "POST",
-    			url: "/login",
+    			url: "/rest/login",
     			data: JSON.stringify({
     					emailAddress: $("#emailAddress").val(),
-    					password: $("#password").val(),
+    					password: $("#password").val()
     				  }),
     			success: function( data ) {
     				alert(data.authToken);
@@ -34,10 +41,11 @@
     	$("#singup").click(function(){
     		$.ajax({
     			type: "POST",
-    			url: "/singup",
+    			url: "/rest/singup",
     			data: JSON.stringify({
     					emailAddress: $("#emailAddress").val(),
     					password: $("#password").val(),
+    					fullName: $("#fullName").val()
     				  }),
     			contentType:"application/json",
     			dataType:"json"
@@ -48,9 +56,8 @@
     		$.ajax({
     			type: "GET",
     			url: "/secure",
-    			headers: {'X-AUTH-TOKEN' : $.cookie("authToken")},
     			success: function( data ) {
-    				alert(data.username);
+    				alert(data.user);
     			}
     		});
     	});
@@ -58,9 +65,9 @@
     	$("#activate").click(function(){
     		$.ajax({
     			type: "GET",
-    			url: "/activate/" + $("#activation").val(),
+    			url: "/rest/activate/" + $("#activation").val(),
     			success: function( data ) {
-    				alert(data.status);
+    				alert(data.authResponse);
     			}
     		});
     	});

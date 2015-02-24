@@ -3,48 +3,29 @@ package controllers;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import models.User;
-import play.PlayInternal;
-import play.libs.Json;
 import play.mvc.Http.Context;
 import play.mvc.Http.Cookie;
 import play.mvc.Result;
 import play.mvc.Security;
+import utils.SecurityHelper;
+import utils.SecurityHelper.AuthenticationStatus;
 
 
 public class Secured extends Security.Authenticator {
 
-	public final static String AUTH_TOKEN_HEADER = "X-AUTH-TOKEN";
-	public static final String AUTH_TOKEN = "authToken";
-
-	
 	@Override
 	public String getUsername(Context ctx) {
-		User user = null;
-		String authToken = null;
-		
-		Cookie authTokenCookie = ctx.request().cookie("authToken");
-		String[] authTokenHeaderValues = ctx.request().headers().get(AUTH_TOKEN_HEADER);
-		
-		if ((authTokenHeaderValues != null) && (authTokenHeaderValues.length == 1) && (authTokenHeaderValues[0] != null)) {
-			PlayInternal.logger().info("---------------> get user from header ");
-			authToken = authTokenHeaderValues[0];
-		} else if(authTokenCookie != null){
-			PlayInternal.logger().info("---------------> get user from cookie ");
-			authToken = authTokenCookie.value();
-		}
-			
-		PlayInternal.logger().info("---------------> authToken : " + authToken);
-		
+		String authToken = getAuthToken(ctx);
+				
 		if (authToken != null && !authToken.isEmpty()) {
-			
-			user = models.User.findByAuthToken(authToken);
+			User user = models.User.findByAuthToken(authToken);
 			
 			if (user != null) {
 				if(user.active){
-					ctx.args.put("user", user);
+					ctx.args.put(SecurityHelper.AUTHORIZED_USER, user);
 					return user.getEmailAddress();
 				} else {
-					ctx.args.put("activate", false);
+					ctx.args.put(SecurityHelper.USER_ACTIVATION, false);
 					return null;
 				}
 			}
@@ -55,17 +36,28 @@ public class Secured extends Security.Authenticator {
 
 	@Override
 	public Result onUnauthorized(Context ctx) {
-    	ObjectNode errorJson = Json.newObject();
-		Boolean activate = (Boolean) ctx.args.get("activate");
+    	ObjectNode errorJson = null;
+		Boolean activate = (Boolean) ctx.args.get(SecurityHelper.USER_ACTIVATION);
 		
 		if(activate != null && !activate){
-			PlayInternal.logger().info("---------------> user not activated ");
-			errorJson.put("error", "user not activated");
+			errorJson = SecurityHelper.AuthResponseGenerator.generateError(AuthenticationStatus.USER_NOT_ACTIVATED);
 		} else {
-			errorJson.put("error", "user not authorized");
-			PlayInternal.logger().info("---------------> user not authorized ");
+			errorJson = SecurityHelper.AuthResponseGenerator.generateError(AuthenticationStatus.USER_NOT_AUTHORIZED);
 		}
-		
+
 		return notFound(errorJson);
+	}
+	
+	private String getAuthToken(Context context){
+		Cookie authTokenCookie = context.request().cookie(SecurityHelper.AUTH_TOKEN_COOKIE);
+		String[] authTokenHeaderValues = context.request().headers().get(SecurityHelper.AUTH_TOKEN_HEADER);
+		
+		if ((authTokenHeaderValues != null) && (authTokenHeaderValues.length == 1) && (authTokenHeaderValues[0] != null)) {
+			return authTokenHeaderValues[0];
+		} else if(authTokenCookie != null){
+			return authTokenCookie.value();
+		} else {
+			return null;
+		}
 	}
 }

@@ -5,10 +5,10 @@
 # Home page
 GET     /                           controllers.Application.index()
 GET     /secure                     controllers.Application.secure()
-GET		/activate/:token    		controllers.Application.activate(token: String)
-POST    /singup                     controllers.Application.singup()
-POST    /login                      controllers.Application.login()
-GET     /logout                     controllers.Application.logout()
+GET		/rest/activate/:token    	controllers.SecurityRestController.activate(token: String)
+POST    /rest/singup                controllers.SecurityRestController.singup()
+POST    /rest/login                 controllers.SecurityRestController.login()
+GET     /rest/logout                controllers.SecurityRestController.logout()
 
 
 # Map static resources from the /public folder to the /assets URL path
